@@ -32,9 +32,16 @@ void CopyBOARD ( unsigned short IN[], unsigned short OUT[], int D )
       OUT[x+D*y] = IN[x+D*y];
 }
 
+void CopyROW ( unsigned short IN[], unsigned short OUT[], int D, int rowID, int rowN)
+{
+  for (int y=rowID; y<rowID+rowN; y++)
+    for (int x=1; x<D-1; x++)
+      OUT[x+D*y] = IN[x+D*y];
+}
+
 
 void __attribute__ ((noinline)) 
-  UpdateBOARD ( unsigned short IN[], unsigned short OUT[], int D, unsigned short MAX_VAL, int)
+  UpdateBOARD ( unsigned short IN[], unsigned short OUT[], int D, unsigned short MAX_VAL)
 {
   unsigned short max1, max2, min1, min2, a, b, c, d, v;
   for (int y=1; y<D-1; y++)
@@ -62,6 +69,34 @@ void __attribute__ ((noinline))
     }
 }
 
+void __attribute__ ((noinline)) 
+  UpdateROW ( unsigned short IN[], unsigned short OUT[], int D, unsigned short MAX_VAL, int rowID, int rowN)
+{
+  unsigned short max1, max2, min1, min2, a, b, c, d, v;
+  for (int y=rowID; y<rowID+rowN; y++)
+    for (int x=1; x<D-1; x++) // access consecutive elements in inner loop
+    {
+      // copy values of neighbour elements
+      a= IN[x+1+D*y];
+      b= IN[x-1+D*y];
+      c= IN[x+D*(y-1)];
+      d= IN[x+D*(y+1)];
+
+      // Sort using Sorting Network
+      max1 = a>b? a: b;
+      min1 = a>b? b: a;
+      max2 = c>d? c: d;
+      min2 = c>d? d: c;
+
+      a    = min1>min2? min2: min1;
+      b    = min1>min2? min1: min2;
+      c    = max1>max2? max2: max1;
+      d    = max1>max2? max1: max2;
+
+      v = (b+c) % MAX_VAL;
+      OUT[x+D*y] = v;
+    }
+}
 
 // void PrintBOARD ( unsigned short BOARD[], int D )
 // {
@@ -186,6 +221,9 @@ int main (int argc, char **argv)
 
   printf("Challenge #2: DIM= %d, N= %d, Iter= %d\n", D, N, Iter);
 
+  printf("%I64u", sizeof(unsigned short));
+  int ROW_N = 2;
+
   unsigned short *BOARD, *TMP;
   unsigned       *Freq, *LocID;
 
@@ -202,13 +240,18 @@ int main (int argc, char **argv)
     {
       #pragma omp parallel num_threads(NTHR)
       #pragma omp for schedule(static)
-      UpdateBOARD  ( BOARD, TMP, D, MAX );          // 56 %
-      CopyBOARD    ( TMP, BOARD, D );               // 25 %
+      for (int y = 1; y < D-1; y+=ROW_N)
+      {
+        UpdateROW  ( BOARD, TMP, D, MAX, y, ROW_N );
+        // CopyROW    ( TMP, BOARD, D, y, ROW_N );
+      }
+      // UpdateBOARD  ( BOARD, TMP, D, MAX );          // 56 %
+      CopyBOARD    ( TMP, BOARD, D );
     }
 
     FillHistogram  ( BOARD, Freq, LocID, D, MAX );  //  7 %
     PrefixSum      ( Freq, MAX );
-    UpdateReversed ( BOARD, Freq, LocID, D, MAX );
+    UpdateReversed ( BOARD, Freq, LocID, D, MAX );  // 25 %
   }
 
   PrintCHECK ( BOARD, D );
