@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 // Variable used to generate pseudo-random numbers
+unsigned int NTHR = 4;
 unsigned int seed;
 
 // Function to generate pseudo-random numbers
@@ -36,6 +37,8 @@ void __attribute__ ((noinline))
   UpdateBOARD ( unsigned short IN[], unsigned short OUT[], int D, unsigned short MAX_VAL )
 {
   unsigned short max1, max2, min1, min2, a, b, c, d, v;
+  #pragma omp parallel num_threads(NTHR)
+  #pragma omp for schedule(static)
   for (int y=1; y<D-1; y++)
     for (int x=1; x<D-1; x++) // access consecutive elements in inner loop
     {
@@ -199,11 +202,11 @@ int main (int argc, char **argv)
   {
     for (int r=0; r<Iter; r++)
     {
-      UpdateBOARD  ( BOARD, TMP, D, MAX );
-      CopyBOARD    ( TMP, BOARD, D );
+      UpdateBOARD  ( BOARD, TMP, D, MAX );          // 56 %
+      CopyBOARD    ( TMP, BOARD, D );               // 25 %
     }
 
-    FillHistogram  ( BOARD, Freq, LocID, D, MAX );
+    FillHistogram  ( BOARD, Freq, LocID, D, MAX );  //  7 %
     PrefixSum      ( Freq, MAX );
     UpdateReversed ( BOARD, Freq, LocID, D, MAX );
   }

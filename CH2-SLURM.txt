@@ -11,7 +11,7 @@ module load gcc/10.2.0
 echo
 
 # compile for CPU
-gcc -O3 CH2.c -o CH2
+gcc -O3 -fopenmp CH2.c -o CH2
 
 # execute and measure total time and general performance counters
 perf stat -e cycles,instructions CH2
