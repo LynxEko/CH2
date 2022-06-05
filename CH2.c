@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 // Variable used to generate pseudo-random numbers
+int ROW_N = 2;
 unsigned int NTHR = 4;
 unsigned int seed;
 
@@ -93,7 +94,8 @@ void __attribute__ ((noinline))
       c    = max1>max2? max2: max1;
       d    = max1>max2? max1: max2;
 
-      v = (b+c) % MAX_VAL;
+      v = b+c;
+      v = v>MAX_VAL? v-MAX_VAL: v;
       OUT[x+D*y] = v;
     }
 }
@@ -222,7 +224,6 @@ int main (int argc, char **argv)
   printf("Challenge #2: DIM= %d, N= %d, Iter= %d\n", D, N, Iter);
 
   printf("%I64u", sizeof(unsigned short));
-  int ROW_N = 2;
 
   unsigned short *BOARD, *TMP;
   unsigned       *Freq, *LocID;
