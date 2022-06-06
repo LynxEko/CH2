@@ -100,14 +100,14 @@ void __attribute__ ((noinline))
     }
 }
 
-// void PrintBOARD ( unsigned short BOARD[], int D )
-// {
-//   for (int x=0; x<D; x++) {
-//     for (int y=0; y<D; y++)
-//       printf("%4d ",BOARD[x+D*y]);
-//     printf("\n");
-//   }
-// }
+void PrintBOARD ( unsigned short BOARD[], int D )
+{
+  for (int x=0; x<D; x++) {
+    for (int y=0; y<D; y++)
+      printf("%4d ",BOARD[x+D*y]);
+    printf("\n");
+  }
+}
 
 
 void PrintCHECK ( unsigned short BOARD[], int D )
@@ -129,22 +129,22 @@ void PrintCHECK ( unsigned short BOARD[], int D )
 }
 
 
-// void CopyBoundary ( unsigned short IN[], unsigned short OUT[], int D )
-// {
-//   // Up and Down Horizontal Boundaries
-//   for (int x=0; x<D; x++)
-//   { // y=0 and y=D-1
-//     OUT[x] = IN[x];
-//     OUT[x+D*(D-1)] = IN[x+D*(D-1)];
-//   }
+void CopyBoundary ( unsigned short IN[], unsigned short OUT[], int D )
+{
+  // Up and Down Horizontal Boundaries
+  for (int x=0; x<D; x++)
+  { // y=0 and y=D-1
+    OUT[x] = IN[x];
+    OUT[x+D*(D-1)] = IN[x+D*(D-1)];
+  }
 
-//   // Left and Rigth Vertical Boundaries
-//   for (int y=1; y<D-1; y++)
-//   { // x=0 and x=D-1
-//     OUT[y*D] = IN[y*D];
-//     OUT[y*D+D-1] = IN[y*D+D-1];
-//   }
-// }
+  // Left and Rigth Vertical Boundaries
+  for (int y=1; y<D-1; y++)
+  { // x=0 and x=D-1
+    OUT[y*D] = IN[y*D];
+    OUT[y*D+D-1] = IN[y*D+D-1];
+  }
+}
 
 
 void __attribute__ ((noinline)) 
@@ -177,12 +177,12 @@ void PrefixSum ( unsigned Freq[], int ValMax )
 }
 
 
-// void PrintPrefix ( unsigned Freq[], int ValMax )
-// {
-//   for (int i=0; i<ValMax; i++)
-//     printf("%4d:%5d ", i, Freq[i]);
-//   printf("\n");
-// }
+void PrintPrefix ( unsigned Freq[], int ValMax )
+{
+  for (int i=0; i<ValMax; i++)
+    printf("%4d:%5d ", i, Freq[i]);
+  printf("\n");
+}
 
 
 unsigned BinSearch( unsigned Vector[], int N, unsigned target )
@@ -223,7 +223,7 @@ int main (int argc, char **argv)
 
   printf("Challenge #2: DIM= %d, N= %d, Iter= %d\n", D, N, Iter);
 
-  printf("%I64u", sizeof(unsigned short));
+  // printf("%I64u", sizeof(unsigned short));
 
   unsigned short *BOARD, *TMP;
   unsigned       *Freq, *LocID;
