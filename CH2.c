@@ -45,6 +45,8 @@ void __attribute__ ((noinline))
   UpdateBOARD ( unsigned short IN[], unsigned short OUT[], int D, unsigned short MAX_VAL)
 {
   unsigned short max1, max2, min1, min2, a, b, c, d, v;
+  #pragma omp parallel num_threads(NTHR)
+  #pragma omp for schedule(static)
   for (int y=1; y<D-1; y++)
     for (int x=1; x<D-1; x++) // access consecutive elements in inner loop
     {
@@ -64,8 +66,9 @@ void __attribute__ ((noinline))
       b    = min1>min2? min1: min2;
       c    = max1>max2? max2: max1;
       d    = max1>max2? max1: max2;
-
-      v = (b+c) % MAX_VAL;
+      
+      v = b+c;
+      v = v<MAX_VAL? v: v-MAX_VAL;
       OUT[x+D*y] = v;
     }
 }
@@ -95,7 +98,7 @@ void __attribute__ ((noinline))
       d    = max1>max2? max1: max2;
 
       v = b+c;
-      v = v>MAX_VAL? v-MAX_VAL: v;
+      v = v<MAX_VAL? v: v-MAX_VAL;
       OUT[x+D*y] = v;
     }
 }
@@ -244,7 +247,6 @@ int main (int argc, char **argv)
       for (int y = 1; y < D-1; y+=ROW_N)
       {
         UpdateROW  ( BOARD, TMP, D, MAX, y, ROW_N );
-        // CopyROW    ( TMP, BOARD, D, y, ROW_N );
       }
       // UpdateBOARD  ( BOARD, TMP, D, MAX );          // 56 %
       CopyBOARD    ( TMP, BOARD, D );
