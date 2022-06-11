@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Variable used to generate pseudo-random numbers
-int ROW_N = 1000;
 unsigned int NTHR = 4;
+// Variable used to generate pseudo-random numbers
 unsigned int seed;
 
 // Function to generate pseudo-random numbers
@@ -79,6 +78,36 @@ void __attribute__ ((noinline))
   unsigned short max1, max2, min1, min2, a, b, c, d, v;
   for (int y=rowID; y<rowID+rowN; y++)
     for (int x=1; x<D-1; x++) // access consecutive elements in inner loop
+    {
+      // copy values of neighbour elements
+      a= IN[x+1+D*y];
+      b= IN[x-1+D*y];
+      c= IN[x+D*(y-1)];
+      d= IN[x+D*(y+1)];
+
+      // Sort using Sorting Network
+      max1 = a>b? a: b;
+      min1 = a>b? b: a;
+      max2 = c>d? c: d;
+      min2 = c>d? d: c;
+
+      //a    = min1>min2? min2: min1;
+      b    = min1>min2? min1: min2;
+      c    = max1>max2? max2: max1;
+      //d    = max1>max2? max1: max2;
+
+      v = b+c;
+      v = v<MAX_VAL? v: v-MAX_VAL;
+      OUT[x+D*y] = v;
+    }
+}
+
+void __attribute__ ((noinline)) 
+  UpdateBLOCK ( unsigned short IN[], unsigned short OUT[], int D, unsigned short MAX_VAL, int colID, int colN)
+{
+  unsigned short max1, max2, min1, min2, a, b, c, d, v;
+  for (int y=1; y<D-1; y++)
+    for (int x=colID; x<colID+colN; x++) // access consecutive elements in inner loop
     {
       // copy values of neighbour elements
       a= IN[x+1+D*y];
@@ -235,6 +264,9 @@ int main (int argc, char **argv)
   printf("Challenge #2: DIM= %d, N= %d, Iter= %d\n", D, N, Iter);
 
   // printf("%I64u", sizeof(unsigned short));
+  
+  int ROW_N = (D-2)/NTHR;
+  int COL_N = (D-2)/NTHR;
 
   unsigned short *BOARD, *TMP;
   unsigned       *Freq, *LocID;
@@ -252,10 +284,16 @@ int main (int argc, char **argv)
     {
       #pragma omp parallel num_threads(NTHR)
       #pragma omp for schedule(static)
-      for (int y = 1; y < D-1; y+=ROW_N)
+      // for (int y = 1; y < D-1; y+=ROW_N)
+      // {
+      //   UpdateROW  ( BOARD, TMP, D, MAX, y, ROW_N );
+      // }
+      for (int x = 1; x < D-1; x+=COL_N)
       {
-        UpdateROW  ( BOARD, TMP, D, MAX, y, ROW_N );
+        UpdateBLOCK ( BOARD, TMP, D, MAX, x, COL_N );
       }
+
+
       // UpdateBOARD  ( BOARD, TMP, D, MAX );          // 56 %
       CopyBOARD    ( TMP, BOARD, D );
     }
