@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 // Variable used to generate pseudo-random numbers
-int ROW_N = 2;
+int ROW_N = 1000;
 unsigned int NTHR = 4;
 unsigned int seed;
 
@@ -92,10 +92,10 @@ void __attribute__ ((noinline))
       max2 = c>d? c: d;
       min2 = c>d? d: c;
 
-      a    = min1>min2? min2: min1;
+      //a    = min1>min2? min2: min1;
       b    = min1>min2? min1: min2;
       c    = max1>max2? max2: max1;
-      d    = max1>max2? max1: max2;
+      //d    = max1>max2? max1: max2;
 
       v = b+c;
       v = v<MAX_VAL? v: v-MAX_VAL;
@@ -188,15 +188,17 @@ void PrintPrefix ( unsigned Freq[], int ValMax )
 }
 
 
-unsigned BinSearch( unsigned Vector[], int N, unsigned target )
+unsigned BinSearch ( unsigned Vector[], int N, unsigned target )
 {
   unsigned M, L= 0, R= N;
   M = (R - L)/2;
   do {
-     M = M + L; 
+     M = M + L;
      unsigned value = Vector[M];
-     if (value < target)  L=M;  else  R=M;
-     M = (R - L)/2;      
+     L = (value < target)? M : L;
+     R = (value < target)? R : M;
+     
+     M = (R - L)/2;
   } while (M);    
   return R;
 }
@@ -205,11 +207,17 @@ unsigned BinSearch( unsigned Vector[], int N, unsigned target )
 void __attribute__ ((noinline)) 
   UpdateReversed ( unsigned short BOARD[], unsigned Freq[], unsigned LocalId[], int D, int ValMax )
 {
-  for (int xy=0; xy<D*D; xy++)
+  int block_size = D*D/4;
+  #pragma omp parallel num_threads(NTHR)
+  #pragma omp for schedule(static)
+  for (int d=0; d < D*D; d+=block_size)
   {
-    unsigned short V = BOARD[xy];
-    unsigned pos     = Freq[V]+LocalId[xy];
-    BOARD[xy]        = BinSearch( Freq, ValMax, D*D-pos)-1;
+    for (int xy=d; xy < d+block_size; xy++)
+    {
+      unsigned short V = BOARD[xy];
+      unsigned pos     = Freq[V]+LocalId[xy];
+      BOARD[xy]        = BinSearch( Freq, ValMax, D*D-pos)-1;
+    }
   }
 }
 
@@ -220,9 +228,9 @@ int main (int argc, char **argv)
   seed = 12345;
 
   // obtain parameters at run time
-  if (argc>1) { D   = atoi(argv[1]); }
-  if (argc>2) { N   = atoi(argv[2]); }
-  if (argc>3) { Iter= atoi(argv[3]); }
+  D = (argc>1)? atoi(argv[1]) : D;
+  N = (argc>2)? atoi(argv[2]) : N;
+  Iter = (argc>3)? atoi(argv[3]) : Iter;
 
   printf("Challenge #2: DIM= %d, N= %d, Iter= %d\n", D, N, Iter);
 
